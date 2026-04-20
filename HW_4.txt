@@ -1,0 +1,172 @@
+-- 1
+CREATE SCHEMA IF NOT EXISTS LibraryManagement;
+USE LibraryManagement;
+
+CREATE TABLE authors (
+    author_id INT auto_increment PRIMARY KEY,
+    author_name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE genres (
+    genre_id INT auto_increment PRIMARY KEY,
+    genre_name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE books (
+    book_id INT auto_increment PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    publication_year YEAR,
+    author_id INT,
+    genre_id INT,
+    FOREIGN KEY (author_id) references authors(author_id),
+    FOREIGN KEY (genre_id) references genres(genre_id)
+);
+
+CREATE TABLE users (
+    user_id INT auto_increment PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE borrowed_books (
+    borrow_id INT auto_increment PRIMARY KEY,
+    book_id INT,
+    user_id INT,
+    borrow_date DATE NOT NULL,
+    return_date DATE,
+    FOREIGN KEY (book_id) references books(book_id),
+    FOREIGN KEY (user_id) references users(user_id)
+);
+
+-- 2
+insert into authors (author_name) values ('Тарас Шевченко'), ('Леся Українка');
+insert into genres (genre_name) values ('Поезія'), ('Драма');
+insert into books (title, publication_year, author_id, genre_id) values ('Тіні забутих предків', 1911, 1, 1), ('Лісова пісня', 1911, 2, 2);
+insert into users (username, email) values ('anna_ivanove', 'anna_ivanove@email.com'), ('olena_novak', 'olena_novak@email.com');
+insert into borrowed_books (book_id, user_id, borrow_date, return_date) 
+values
+(1, 1, '2024-03-01', '2024-03-15'),
+(2, 2, '2024-03-05', '2024-03-20');
+
+USE LibraryManagement;
+SELECT * FROM books
+
+
+-- 3
+USE mydb;
+
+SELECT *
+FROM order_details AS od
+INNER JOIN orders AS o ON od.order_id = o.id
+INNER JOIN customers AS c ON o.customer_id = c.id
+INNER JOIN products AS p ON od.product_id = p.id
+INNER JOIN categories AS cat ON p.category_id = cat.id
+INNER JOIN employees AS e ON o.employee_id = e.employee_id
+INNER JOIN shippers AS sh ON o.shipper_id = sh.id
+INNER JOIN suppliers AS sup ON p.supplier_id = sup.id;
+
+
+-- 4.1
+USE mydb;
+SELECT count(*)
+FROM order_details AS od
+INNER JOIN orders AS o ON od.order_id = o.id
+INNER JOIN customers AS c ON o.customer_id = c.id
+INNER JOIN products AS p ON od.product_id = p.id
+INNER JOIN categories AS cat ON p.category_id = cat.id
+INNER JOIN employees AS e ON o.employee_id = e.employee_id
+INNER JOIN shippers AS sh ON o.shipper_id = sh.id
+INNER JOIN suppliers AS sup ON p.supplier_id = sup.id;
+
+-- 4.2
+USE mydb;
+SELECT count(*)
+FROM order_details AS od
+INNER JOIN orders AS o ON od.order_id = o.id
+INNER JOIN products AS p ON od.product_id = p.id
+INNER JOIN customers AS c ON o.customer_id = c.id
+
+USE mydb;
+SELECT count(*)
+FROM order_details AS od
+LEFT JOIN orders AS o ON od.order_id = o.id
+LEFT JOIN products AS p ON od.product_id = p.id
+RIGHT JOIN customers AS c ON o.customer_id = c.id
+
+Після заміни частини операторів INNER JOIN на LEFT JOIN та RIGHT JOIN кількість рядків змінилася:
+-при INNER JOIN — 518 рядків
+-при LEFT/RIGHT JOIN — 535 рядків
+
+INNER JOIN повертає лише ті записи, які мають відповідні значення в обох таблицях. Якщо пов’язаного запису немає, такий рядок виключається з результату.
+
+LEFT JOIN залишає всі записи з лівої таблиці; RIGHT JOIN залишає всі записи з правої таблиці.
+
+Отже, після заміни INNER JOIN на LEFT/RIGHT JOIN кількість рядків збільшилась з 518 до 535, тобто на 17 рядків, бо були знайдені записи, які раніше відсіювалися INNER JOIN.
+
+
+-- 4.3
+USE mydb;
+SELECT *
+FROM order_details AS od
+INNER JOIN orders AS o ON od.order_id = o.id
+INNER JOIN customers AS c ON o.customer_id = c.id
+INNER JOIN products AS p ON od.product_id = p.id
+INNER JOIN categories AS cat ON p.category_id = cat.id
+INNER JOIN employees AS e ON o.employee_id = e.employee_id
+INNER JOIN shippers AS sh ON o.shipper_id = sh.id
+INNER JOIN suppliers AS sup ON p.supplier_id = sup.id
+WHERE o.employee_id BETWEEN 4 AND 10;
+
+
+-- 4.4
+USE mydb;
+SELECT 
+    cat.name AS category_name,
+    COUNT(*) AS kilkist,
+    AVG(od.quantity) AS serednia
+FROM order_details od
+INNER JOIN products p ON od.product_id = p.id
+INNER JOIN categories cat ON p.category_id = cat.id
+GROUP BY cat.name;
+
+
+-- 4.5
+USE mydb;
+SELECT 
+    cat.name,
+    COUNT(*) AS kilkist,
+    AVG(od.quantity) AS serednia
+FROM order_details AS od
+INNER JOIN products AS p ON od.product_id = p.id
+INNER JOIN categories AS cat ON p.category_id = cat.id
+GROUP BY cat.name
+
+HAVING serednia > 21;
+
+
+-- 4.6
+USE mydb;
+SELECT 
+    cat.name,
+    COUNT(*) AS kilkist,
+    AVG(od.quantity) AS serednia
+FROM order_details AS od
+INNER JOIN products AS p ON od.product_id = p.id
+INNER JOIN categories AS cat ON p.category_id = cat.id
+GROUP BY cat.name
+HAVING serednia > 21
+ORDER BY kilkist DESC;
+
+-- 4.7
+USE mydb;
+SELECT 
+    cat.name,
+    COUNT(*) AS kilkist,
+    AVG(od.quantity) AS serednia
+FROM order_details AS od
+INNER JOIN products AS p ON od.product_id = p.id
+INNER JOIN categories AS cat ON p.category_id = cat.id
+GROUP BY cat.name
+HAVING serednia > 21
+ORDER BY kilkist DESC
+LIMIT 1, 4;
